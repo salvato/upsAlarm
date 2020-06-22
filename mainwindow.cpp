@@ -62,12 +62,20 @@ MainWindow::MainWindow(int &argc, char **argv)
 
     updateInterval = 60*1000;        // 60 sec (in ms)
     resendInterval = 30 * 60 * 1000; // 30 min (in ms)
-    restoreSettings();
+
     // Build the log file pathname
     sLogFileName = QString("UPS-AlarmLog.txt");
     QString sLogDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     if(!sLogDir.endsWith(QString("/"))) sLogDir+= QString("/");
     sLogFileName = sLogDir+sLogFileName;
+
+    if(!logRotate(sLogFileName)) { // If unable to open Log File then Log to syslog
+        QString sAppName = QFileInfo(QCoreApplication::applicationFilePath()).fileName();
+        // See the syslog(3) man page
+        openlog(sAppName.toLatin1().constData(), LOG_PID, LOG_USER);
+    }
+
+    restoreSettings();
 }
 
 
@@ -81,11 +89,6 @@ MainWindow::exec() {
         qDebug() << "Unable to handle the SIGUSR1 signal";
     connect(this, SIGNAL(configurationChanged()),
             this, SLOT(restoreSettings()));
-    if(!logRotate(sLogFileName)) { // If unable to open Log File then Log to syslog
-        QString sAppName = QFileInfo(QCoreApplication::applicationFilePath()).fileName();
-        // See the syslog(3) man page
-        openlog(sAppName.toLatin1().constData(), LOG_PID, LOG_USER);
-    }
 
     b18B20exist = is18B20connected();
 
@@ -244,7 +247,9 @@ MainWindow::logMessage(QString sMessage) {
     QString sDebugMessage = currentTime.currentDateTime().toString() +
             QString(": ") +
             sMessage;
+#ifdef QT_DEBUG
     qDebug() << sDebugMessage;
+#endif
     if(pLogFile) {
         if(pLogFile->isOpen()) {
             pLogFile->write(sDebugMessage.toLatin1().constData());
@@ -269,6 +274,7 @@ MainWindow::restoreSettings() {
     sCc = settings.value("Cc:", "").toString();
     sCc1 = settings.value("Cc1:", "").toString();
     dMaxTemperature = settings.value("Alarm Threshold", "28.0").toDouble();
+    logMessage(QString("Threshold: %1").arg(dMaxTemperature));
     sMessageText = settings.value("Message to Send:", "").toString();
 }
 
