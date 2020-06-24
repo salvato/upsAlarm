@@ -60,7 +60,7 @@ MainWindow::MainWindow(int &argc, char **argv)
     bAlarmMessageSent = false;
     b18B20exist       = false;
 
-    updateInterval = 60*1000;        // 60 sec (in ms)
+    updateInterval = 60 * 1000;      // 60 sec (in ms)
     resendInterval = 30 * 60 * 1000; // 30 min (in ms)
 
     // Build the log file pathname
@@ -266,7 +266,7 @@ MainWindow::logMessage(QString sMessage) {
 
 void
 MainWindow::restoreSettings() {
-    logMessage("Settings Changed");
+    logMessage("Settings Changed. New Values Are:");
     sUsername = settings.value("Username:", "upsgenerale").toString();
     sPassword = settings.value("Password:", "").toString();
     sMailServer = settings.value("Mail Server:", "posta.ipcf.cnr.it").toString();
@@ -274,8 +274,13 @@ MainWindow::restoreSettings() {
     sCc = settings.value("Cc:", "").toString();
     sCc1 = settings.value("Cc1:", "").toString();
     dMaxTemperature = settings.value("Alarm Threshold", "28.0").toDouble();
-    logMessage(QString("Threshold: %1").arg(dMaxTemperature));
     sMessageText = settings.value("Message to Send:", "").toString();
+    logMessage(QString("Username: %1").arg(sUsername));
+    logMessage(QString("Mail Server: %1").arg(sMailServer));
+    logMessage(QString("To: %1").arg(sTo));
+    logMessage(QString("Cc: %1").arg(sCc));
+    logMessage(QString("Cc1: %1").arg(sCc1));
+    logMessage(QString("Threshold: %1").arg(dMaxTemperature));
 }
 
 
