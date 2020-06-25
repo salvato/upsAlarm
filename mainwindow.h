@@ -40,7 +40,6 @@ public:
     MainWindow(int &argc, char **argv);
     ~MainWindow();
     int  exec();
-    static void sigusr1SignalHandler(int unused);
 
 public:
     QStringList payloadText;
@@ -73,7 +72,6 @@ private:
     QFile*           pLogFile;
     QString          sLogFileName;
     QString          sSensorFilePath;
-    QSettings        settings;
     QTimer           updateTimer;
     uint32_t         updateInterval;
     QTimer           resendTimer;

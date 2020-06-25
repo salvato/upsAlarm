@@ -43,15 +43,11 @@ payloadSource(void *ptr, size_t size, size_t nmemb, void *userp) {
 }
 
 
-MainWindow* pThis = nullptr;
-
-
 MainWindow::MainWindow(int &argc, char **argv)
     : QCoreApplication(argc, argv)
     , recipients(nullptr)
     , pLogFile(nullptr)
 {
-    pThis = this;
     gpioHostHandle = -1;
     gpioSensorPin  = 23; // BCM 23: pin 16 in the 40 pins GPIO connector
     // DS18B20 connected to BCM  4: pin 7  in the 40 pins GPIO connector
@@ -81,15 +77,6 @@ MainWindow::MainWindow(int &argc, char **argv)
 
 int
 MainWindow::exec() {
-    struct sigaction usr1;
-    usr1.sa_handler = MainWindow::sigusr1SignalHandler;
-    sigemptyset(&usr1.sa_mask);
-    usr1.sa_flags = 0;
-    if(sigaction(SIGUSR1, &usr1, nullptr) != 0)
-        qDebug() << "Unable to handle the SIGUSR1 signal";
-    connect(this, SIGNAL(configurationChanged()),
-            this, SLOT(restoreSettings()));
-
     b18B20exist = is18B20connected();
 
     // Initialize the GPIO handler
@@ -155,13 +142,6 @@ MainWindow::~MainWindow() {
         pLogFile = nullptr;
     }
     closelog();
-}
-
-
-void
-MainWindow::sigusr1SignalHandler(int unused) {
-    Q_UNUSED(unused)
-    emit pThis->configurationChanged();
 }
 
 
@@ -266,21 +246,23 @@ MainWindow::logMessage(QString sMessage) {
 
 void
 MainWindow::restoreSettings() {
+    QSettings* pSettings = new QSettings();
+    sUsername = pSettings->value("Username:", "upsgenerale").toString();
+    sPassword = pSettings->value("Password:", "").toString();
+    sMailServer = pSettings->value("Mail Server:", "posta.ipcf.cnr.it").toString();
+    sTo  = pSettings->value("To:", "").toString();
+    sCc  = pSettings->value("Cc:", "").toString();
+    sCc1 = pSettings->value("Cc1:", "").toString();
+    dMaxTemperature = pSettings->value("Alarm Threshold", "28.0").toDouble();
+    sMessageText = pSettings->value("Message to Send:", "").toString();
     logMessage("Settings Changed. New Values Are:");
-    sUsername = settings.value("Username:", "upsgenerale").toString();
-    sPassword = settings.value("Password:", "").toString();
-    sMailServer = settings.value("Mail Server:", "posta.ipcf.cnr.it").toString();
-    sTo = settings.value("To:", "").toString();
-    sCc = settings.value("Cc:", "").toString();
-    sCc1 = settings.value("Cc1:", "").toString();
-    dMaxTemperature = settings.value("Alarm Threshold", "28.0").toDouble();
-    sMessageText = settings.value("Message to Send:", "").toString();
     logMessage(QString("Username: %1").arg(sUsername));
     logMessage(QString("Mail Server: %1").arg(sMailServer));
     logMessage(QString("To: %1").arg(sTo));
     logMessage(QString("Cc: %1").arg(sCc));
     logMessage(QString("Cc1: %1").arg(sCc1));
     logMessage(QString("Threshold: %1").arg(dMaxTemperature));
+    delete pSettings;
 }
 
 
