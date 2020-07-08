@@ -30,7 +30,7 @@
 
 size_t
 payloadSource(void *ptr, size_t size, size_t nmemb, void *userp) {
-    struct upload_status* upload_ctx = (struct upload_status*)userp;
+    struct upload_status* upload_ctx = static_cast<struct upload_status*>(userp);
     if((size == 0) || (nmemb == 0) || ((size*nmemb) < 1))
         return 0;
     if(upload_ctx->lines_read >= upload_ctx->pPayload->count())
@@ -80,7 +80,11 @@ MainWindow::exec() {
     b18B20exist = is18B20connected();
 
     // Initialize the GPIO handler
-    gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
+#pragma GCC diagnostic push  // require GCC 4.6
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+        gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
+#pragma GCC diagnostic pop   //
     if(gpioHostHandle >= 0) {
         if(set_mode(gpioHostHandle, gpioSensorPin, PI_INPUT) < 0) {
             logMessage(QString("Unable to initialize GPIO%1 as Output")
@@ -106,14 +110,14 @@ MainWindow::exec() {
     // Check the Thermostat Status every minute
     updateTimer.start(updateInterval);
 
-#ifndef QT_DEBUG
+//#ifndef QT_DEBUG
     logMessage("System Started");
     if(sendMail("UPS Temperature Alarm System [INFO]",
                 "The Alarm System Has Been Restarted"))
         logMessage("UPS Temperature Alarm System [INFO]: Message Sent");
     else
         logMessage("UPS Temperature Alarm System [INFO]: Unable to Send the Message");
-#endif
+//#endif
     return QCoreApplication::exec();
 }
 
@@ -307,7 +311,7 @@ MainWindow::sendMail(QString sSubject, QString sMessage) {
 
     curl = curl_easy_init();
     if(curl) {
-        QString mailserverURL = QString("smtps://%1@%2")
+        QString mailserverURL = QString("smtp://%1@%2")
                 .arg(sUsername)
                 .arg(sMailServer);
         curl_easy_setopt(curl, CURLOPT_URL, mailserverURL.toLatin1().constData());

@@ -1,9 +1,19 @@
+Con la versione 1.1.1 di OPenSSL NON é possibile
+il collegamento sicuro smtps:// perchè il Server
+di posta NON è in grado di negoziare un protocollo
+abbastanza sicuro.
+
+$ sudo apt install gpiod
+$ sudo apt install libgpiod-dev
+$ sudo apt install php7.3-gd
+
+
 $ sudo nano /lib/systemd/system/upsAlarm.service
 
 
 [Unit]
 Description=UPS Temperature Alarm System
-After= graphical.target network-online.target
+After= network-online.target
 
 [Service]
 ExecStart=/home/pi/upsAlarm
@@ -27,76 +37,6 @@ To check:
 you should not put the executable in your home folder.
 Instead, put it under /etc/systemd/system/
 
-
-
-/*This is the sample program to notify us for
-  the file creation and file deletion takes place
-  in “/tmp” directory
- */
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <linux/inotify.h>
-
-#define EVENT_SIZE  ( sizeof (struct inotify_event) )
-#define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
-
-int main( )
-{
-  int length, i = 0;
-  int fd;
-  int wd;
-  char buffer[EVENT_BUF_LEN];
-
-  /*creating the INOTIFY instance*/
-  fd = inotify_init();
-
-  /*checking for error*/
-  if ( fd < 0 ) {
-    perror( "inotify_init" );
-  }
-
-  /*adding the “/tmp” directory into watch list. Here, the suggestion is to validate the existence of the directory before adding into monitoring list.*/
-  wd = inotify_add_watch( fd, "/tmp", IN_CREATE | IN_DELETE );
-
-  /*read to determine the event change happens on “/tmp” directory. Actually this read blocks until the change event occurs*/
-
-  length = read( fd, buffer, EVENT_BUF_LEN );
-
-  /*checking for error*/
-  if ( length < 0 ) {
-    perror( "read" );
-  }
-
-  /*actually read return the list of change events happens. Here, read the change event one by one and process it accordingly.*/
-  while ( i < length ) {     struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];     if ( event->len ) {
-      if ( event->mask & IN_CREATE ) {
-        if ( event->mask & IN_ISDIR ) {
-          printf( "New directory %s created.\n", event->name );
-        }
-        else {
-          printf( "New file %s created.\n", event->name );
-        }
-      }
-      else if ( event->mask & IN_DELETE ) {
-        if ( event->mask & IN_ISDIR ) {
-          printf( "Directory %s deleted.\n", event->name );
-        }
-        else {
-          printf( "File %s deleted.\n", event->name );
-        }
-      }
-    }
-    i += EVENT_SIZE + event->len;
-  }
-  /*removing the “/tmp” directory from the watch list.*/
-   inotify_rm_watch( fd, wd );
-
-  /*closing the INOTIFY instance*/
-   close( fd );
-
-}
 
 
 $ sudo openssl genrsa -out ca.key 2048
@@ -134,3 +74,54 @@ and insert the following text:
 
 $ sudo a2enmod rewrite
 $ sudo systemctl restart apache2.service
+
+
+
+To retrieve the SSL public certificate of the site, use:
+
+    $ openssl s_client -connect posta.ipcf.cnr.it:465 | tee logfile
+
+The certificate is the portion marked by
+----BEGIN CERTIFICATE---- and
+---END CERTIFICATE----.
+
+Save that certificate into a file.
+
+Step 1:	Identify which directory your OpenSSL installation uses.
+    $ openssl version -d
+    OPENSSLDIR: "/usr/lib/ssl"
+
+Step 2: Change to that directory and list the directory contents.
+        You should see a directory called certs.
+    $ cd /usr/lib/ssl && ls -al
+    drwxr-xr-x  3 root root  4096 mar 17 17:39 .
+    drwxr-xr-x 95 root root 12288 giu 10 14:31 ..
+    lrwxrwxrwx  1 root root    14 mar 29  2018 certs -> /etc/ssl/certs
+    drwxr-xr-x  2 root root  4096 mar 17 17:39 misc
+    lrwxrwxrwx  1 root root    20 set 27  2019 openssl.cnf -> /etc/ssl/openssl.cnf
+    lrwxrwxrwx  1 root root    16 mar 29  2018 private -> /etc/ssl/private
+
+Step 3: Change to that directory.
+    $ cd certs
+
+List the directory contents.
+You should see from the symlinks that the certificates are actually
+stored in /usr/share/ca-certificates.
+
+Step 4: Change to /usr/share/ca-certificates directory and add
+        your self-signed certificate there, (ex: your.cert.name.crt)
+
+Step 5: Change to /etc directory and edit the file ca-certificates.conf.
+    $ cd /etc
+    $ nano ca-certificates.conf
+
+Add your.cert.name.crt to the file (ca-certificates.conf) and save it.
+
+Last Step: Execute the program update-ca-certificates –fresh.
+Note: You might like to backup /etc/ssl/certs before executing the command.
+
+    $ sudo update-ca-certificates --fresh
+    Clearing symlinks in /etc/ssl/certs...done.
+    Updating certificates in /etc/ssl/certs....done.
+    Running hooks in /etc/ca-certificates/update.d....done.
+

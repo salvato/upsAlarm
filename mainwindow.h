@@ -73,15 +73,15 @@ private:
     QString          sLogFileName;
     QString          sSensorFilePath;
     QTimer           updateTimer;
-    uint32_t         updateInterval;
+    int32_t          updateInterval;
     QTimer           resendTimer;
-    uint32_t         resendInterval;
+    int32_t          resendInterval;
     QTimer           readTemperatureTimer;
     QDateTime        startTime;
     QDateTime        rotateLogTime;
     QDateTime        currentTime;
     int              gpioHostHandle;
-    int              gpioSensorPin;
+    uint             gpioSensorPin;
     bool             b18B20exist;
     bool             bOnAlarm;
     bool             bAlarmMessageSent;
