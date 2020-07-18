@@ -360,9 +360,10 @@ MainWindow::sendMail(QString sSubject, QString sMessage) {
 void
 MainWindow::onTimeToCheckTemperature() {
     // Check if it's time (every 7 days) to rotate log:
-    if(rotateLogTime.daysTo(QDateTime::currentDateTime()) > 7) {
+    if(rotateLogTime.daysTo(QDateTime::currentDateTime()) > 6) {
         logRotate(sLogFileName);
         rotateLogTime = QDateTime::currentDateTime();
+        restoreSettings();
     }
     bOnAlarm = (gpio_read(gpioHostHandle, gpioSensorPin) == 0);
     if(b18B20exist) {
