@@ -3,10 +3,17 @@ il collegamento sicuro smtps:// perchè il Server
 di posta NON è in grado di negoziare un protocollo
 abbastanza sicuro.
 
+$ sudo apt install qt5-default qtcreator
 $ sudo apt install gpiod
 $ sudo apt install libgpiod-dev
 $ sudo apt install php7.3-gd
+$ sudo apt install libcurl4-openssl-dev
+$ sudo apt install apache2
+$ sudo apt install libapache2-mod-php
 
+$ sudo systemctl enable pigpiod
+$ sudo systemctl restart pigpiod
+$ sudo systemctl status pigpiod
 
 $ sudo nano /lib/systemd/system/upsAlarm.service
 
